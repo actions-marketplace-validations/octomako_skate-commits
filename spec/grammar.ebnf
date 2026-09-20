@@ -1,0 +1,28 @@
+(*
+the spec
+*)
+
+commit ::= [ header ': ' ] description [ '|' references ]
+
+(* the header is whitespace sensitive *)
+header ::= scope [ type ] [ breaking ]
+
+scope ::= identifier { '.' identifier }
+
+type ::= '(' modifier ')'
+modifier ::=
+    'fix'
+  | 'migrate'
+  | 'optimize'
+  | 'refactor'
+  | 'revert'
+
+breaking ::= '!'
+
+(* the body is whitespace insensitive *)
+description ::= text
+references  ::= reference { ' ' reference }
+
+identifier ::= ? lowercase scope identifier ?
+reference  ::= ? non-whitespace reference ?
+text       ::= ? non-empty text excluding "|" ?
