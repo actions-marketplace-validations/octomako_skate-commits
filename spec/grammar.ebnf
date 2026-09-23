@@ -11,7 +11,9 @@ commit ::= [ header ': ' ] description [ ' | ' references ] [ '\n' body ]
 header ::= scope [ type ] [ breaking ]
 
 (* scopes can be nested with dots *)
-scope ::= identifier { '.' identifier }
+scope ::= segment { '.' segment }
+
+segment ::= ? lowercase scope identifier ?
 
 (* optional change type *)
 type ::= '(' modifier ')'
@@ -33,6 +35,5 @@ references  ::= reference { ' ' reference }
 (* kept as-is, not touched during parsing *)
 body ::= ? any sequence of characters ?
 
-identifier ::= ? lowercase scope identifier ?
 reference ::= ? non-whitespace characters excluding newline ?
 text ::= ? non-empty characters excluding "|" and newline ?
