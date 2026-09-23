@@ -1,15 +1,21 @@
 (*
-the spec
+skate commit message grammar
+
+only the first line is structured
+everything after the first newline is kept as the body
 *)
 
-commit ::= [ header ': ' ] description [ '|' references ]
+commit ::= [ header ': ' ] description [ ' | ' references ] [ '\n' body ]
 
-(* the header is whitespace sensitive *)
+(* compact metadata at the start of the first line *)
 header ::= scope [ type ] [ breaking ]
 
+(* scopes can be nested with dots *)
 scope ::= identifier { '.' identifier }
 
+(* optional change type *)
 type ::= '(' modifier ')'
+
 modifier ::=
     'fix'
   | 'migrate'
@@ -17,12 +23,16 @@ modifier ::=
   | 'refactor'
   | 'revert'
 
+(* marks a breaking change *)
 breaking ::= '!'
 
-(* the body is whitespace insensitive *)
+(* the rest of the first line *)
 description ::= text
 references  ::= reference { ' ' reference }
 
+(* kept as-is, not touched during parsing *)
+body ::= ? any sequence of characters ?
+
 identifier ::= ? lowercase scope identifier ?
-reference  ::= ? non-whitespace reference ?
-text       ::= ? non-empty text excluding "|" ?
+reference ::= ? non-whitespace characters excluding newline ?
+text ::= ? non-empty characters excluding "|" and newline ?
