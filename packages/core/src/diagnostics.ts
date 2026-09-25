@@ -9,11 +9,7 @@ export type Diagnostic = {
     severity: Severity
     message: string
     span: Span
-
-    code?: string
-    label?: string
-    notes?: string[]
-}
+} & DiagnosticOptions
 
 export type DiagnosticOptions = {
     code?: string
@@ -60,5 +56,22 @@ export class Diagnostics {
             span,
             ...options,
         })
+    }
+
+    public render(): string {
+        return this.items.map((diagnostic) => this.renderDiagnostic(diagnostic)).join("\n\n")
+    }
+
+    private renderDiagnostic(diagnostic: Diagnostic): string {
+        const code = diagnostic.code ? `[${diagnostic.code}]` : ""
+        const column = diagnostic.span.start + 1
+
+        const output = [`${diagnostic.severity}${code}:${column} ${diagnostic.message}`]
+
+        if (diagnostic.notes?.length) {
+            output.push(...diagnostic.notes.map((note) => `note: ${note}`))
+        }
+
+        return output.join("\n")
     }
 }
