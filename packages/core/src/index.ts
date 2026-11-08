@@ -1,13 +1,8 @@
-import { Parser } from "./parser"
-
-const source = "engine()!!!: abc | hello world!"
-const parser = new Parser(source)
-
-const commit = parser.parse()
-
-if (parser.diagnostics.hasErrors) {
-    const source = parser.diagnostics.render()
-    console.log(source)
-} else {
-    console.log(commit)
-}
+export { Parser } from "./parser"
+export { Diagnostics } from "./diagnostics"
+export type { Diagnostic, DiagnosticOptions, Message, Severity, Span } from "./diagnostics"
+export { formatDiagnostic, formatDiagnostics, formatMessage } from "./formatter"
+export { en } from "./localization"
+export type { Locale } from "./localization"
+export { COMMIT_TYPES } from "./types"
+export type { Commit, CommitType } from "./types"

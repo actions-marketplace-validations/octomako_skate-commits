@@ -90,9 +90,11 @@ export class Parser {
 
             if (character === ":") {
                 if (header !== null) {
-                    this.diagnostics.error("multiple header markers", this.span(i, i + 1), {
+                    this.diagnostics.error({ key: "marker.header" }, this.span(i, i + 1), {
                         code: "marker.header",
-                        label: "only one `:` is allowed",
+                        labels: [
+                            { span: this.span(i, i + 1), message: { key: "marker.header.label" } },
+                        ],
                     })
                 } else {
                     header = i
@@ -101,9 +103,14 @@ export class Parser {
 
             if (character === "|") {
                 if (references !== null) {
-                    this.diagnostics.error("multiple reference markers", this.span(i, i + 1), {
+                    this.diagnostics.error({ key: "marker.references" }, this.span(i, i + 1), {
                         code: "marker.references",
-                        label: "only one `|` is allowed",
+                        labels: [
+                            {
+                                span: this.span(i, i + 1),
+                                message: { key: "marker.references.label" },
+                            },
+                        ],
                     })
                 } else {
                     references = i
@@ -112,13 +119,9 @@ export class Parser {
         }
 
         if (header !== null && references !== null && header > references) {
-            this.diagnostics.error(
-                "header marker must come before references",
-                this.span(header, header + 1),
-                {
-                    code: "marker.order",
-                },
-            )
+            this.diagnostics.error({ key: "marker.order" }, this.span(header, header + 1), {
+                code: "marker.order",
+            })
         }
 
         return {
@@ -141,9 +144,11 @@ export class Parser {
         }
 
         if (this.cursor < end) {
-            this.diagnostics.error("invalid header syntax", this.span(this.cursor, end), {
+            this.diagnostics.error({ key: "header.syntax" }, this.span(this.cursor, end), {
                 code: "header.syntax",
-                label: "unexpected content",
+                labels: [
+                    { span: this.span(this.cursor, end), message: { key: "header.syntax.label" } },
+                ],
             })
 
             this.cursor = end
@@ -155,7 +160,7 @@ export class Parser {
         const first = this.parseScopeSegment(end)
 
         if (first === null) {
-            this.diagnostics.error("expected a scope", this.point(), {
+            this.diagnostics.error({ key: "scope.expected" }, this.point(), {
                 code: "scope.expected",
             })
 
@@ -169,7 +174,7 @@ export class Parser {
             const scope = this.parseScopeSegment(end)
 
             if (scope === null) {
-                this.diagnostics.error("expected a scope after `.`", this.span(dot, this.cursor), {
+                this.diagnostics.error({ key: "scope.after_dot" }, this.span(dot, this.cursor), {
                     code: "scope.expected",
                 })
 
@@ -194,7 +199,7 @@ export class Parser {
         const value = this.source.slice(start, this.cursor)
 
         if (uppercaseCharacter.test(value)) {
-            this.diagnostics.error("scope must be lowercase", this.span(start, this.cursor), {
+            this.diagnostics.error({ key: "scope.case" }, this.span(start, this.cursor), {
                 code: "scope.case",
             })
         }
@@ -214,9 +219,9 @@ export class Parser {
         }
 
         if (this.cursor >= end) {
-            this.diagnostics.error("unterminated commit type", this.span(open, end), {
+            this.diagnostics.error({ key: "type.unterminated" }, this.span(open, end), {
                 code: "type.unterminated",
-                label: "expected `)`",
+                labels: [{ span: this.point(end), message: { key: "type.unterminated.label" } }],
             })
 
             return
@@ -227,10 +232,17 @@ export class Parser {
 
         this.advance()
 
+        if (value.length === 0) {
+            this.diagnostics.error({ key: "type.empty" }, this.span(open, this.cursor), {
+                code: "type.empty",
+            })
+            return
+        }
+
         if (!isCommitType(value)) {
-            this.diagnostics.error(`unknown commit type \`${value}\``, span, {
+            this.diagnostics.error({ key: "type.unknown", args: { value } }, span, {
                 code: "type.unknown",
-                notes: [`expected one of: ${COMMIT_TYPES.join(", ")}`],
+                notes: [{ key: "type.allowed", args: { types: COMMIT_TYPES } }],
             })
 
             return
@@ -251,7 +263,7 @@ export class Parser {
         const whitespace = this.source.slice(start, this.cursor)
 
         if (whitespace.length === 0) {
-            this.diagnostics.error("expected a space after `:`", this.point(start), {
+            this.diagnostics.error({ key: "header.space_missing" }, this.point(start), {
                 code: "header.spacing",
             })
 
@@ -259,13 +271,9 @@ export class Parser {
         }
 
         if (whitespace !== " ") {
-            this.diagnostics.warning(
-                "expected one space after `:`",
-                this.span(start, this.cursor),
-                {
-                    code: "header.spacing",
-                },
-            )
+            this.diagnostics.warning({ key: "header.space_extra" }, this.span(start, this.cursor), {
+                code: "header.spacing",
+            })
         }
     }
 
@@ -281,16 +289,20 @@ export class Parser {
             const whitespace = this.source.slice(textEnd, end)
 
             if (whitespace !== " ") {
-                this.diagnostics.warning("expected one space before `|`", this.span(textEnd, end), {
-                    code: "references.spacing",
-                })
+                this.diagnostics.warning(
+                    { key: "references.space_before" },
+                    this.span(textEnd, end),
+                    {
+                        code: "references.spacing",
+                    },
+                )
             }
         }
 
         const description = this.source.slice(start, textEnd)
 
         if (description.length === 0) {
-            this.diagnostics.error("expected a description", this.point(start), {
+            this.diagnostics.error({ key: "description.expected" }, this.point(start), {
                 code: "description.expected",
             })
 
@@ -298,7 +310,7 @@ export class Parser {
         }
 
         if ([...description].every((character) => isWhitespace(character))) {
-            this.diagnostics.error("description cannot be empty", this.span(start, textEnd), {
+            this.diagnostics.error({ key: "description.empty" }, this.span(start, textEnd), {
                 code: "description.expected",
             })
 
@@ -316,7 +328,7 @@ export class Parser {
         }
 
         if (!isWhitespace(this.peek())) {
-            this.diagnostics.error("expected a space after `|`", this.point(), {
+            this.diagnostics.error({ key: "references.space_missing" }, this.point(), {
                 code: "references.spacing",
             })
 
@@ -333,7 +345,7 @@ export class Parser {
 
         if (whitespace !== " ") {
             this.diagnostics.warning(
-                "expected one space after `|`",
+                { key: "references.space_extra" },
                 this.span(start, this.cursor),
                 {
                     code: "references.spacing",
@@ -345,7 +357,7 @@ export class Parser {
     // references = reference { ' ' reference }
     private parseReferences(commit: Commit, lineEnd: number) {
         if (this.cursor >= lineEnd) {
-            this.diagnostics.error("expected a reference after `|`", this.point(), {
+            this.diagnostics.error({ key: "reference.expected" }, this.point(), {
                 code: "reference.expected",
             })
 
@@ -379,7 +391,7 @@ export class Parser {
 
             if (whitespace !== " ") {
                 this.diagnostics.warning(
-                    "expected one space between references",
+                    { key: "references.space_between" },
                     this.span(whitespaceStart, this.cursor),
                     {
                         code: "references.spacing",

@@ -5,16 +5,21 @@ export type Span = {
 
 export type Severity = "error" | "warning"
 
+export type Message = {
+    key: string
+    args?: Record<string, string | readonly string[]>
+}
+
 export type Diagnostic = {
     severity: Severity
-    message: string
+    message: Message
     span: Span
 } & DiagnosticOptions
 
 export type DiagnosticOptions = {
-    code?: string
-    label?: string
-    notes?: string[]
+    code: string
+    labels?: { span: Span; message: Message }[]
+    notes?: Message[]
 }
 
 export class Diagnostics {
@@ -40,7 +45,7 @@ export class Diagnostics {
         this.items.push(diagnostic)
     }
 
-    public error(message: string, span: Span, options: DiagnosticOptions = {}) {
+    public error(message: Message, span: Span, options: DiagnosticOptions) {
         this.push({
             severity: "error",
             message,
@@ -49,29 +54,12 @@ export class Diagnostics {
         })
     }
 
-    public warning(message: string, span: Span, options: DiagnosticOptions = {}) {
+    public warning(message: Message, span: Span, options: DiagnosticOptions) {
         this.push({
             severity: "warning",
             message,
             span,
             ...options,
         })
-    }
-
-    public render(): string {
-        return this.items.map((diagnostic) => this.renderDiagnostic(diagnostic)).join("\n\n")
-    }
-
-    private renderDiagnostic(diagnostic: Diagnostic): string {
-        const code = diagnostic.code ? `[${diagnostic.code}]` : ""
-        const column = diagnostic.span.start + 1
-
-        const output = [`${diagnostic.severity}${code}:${column} ${diagnostic.message}`]
-
-        if (diagnostic.notes?.length) {
-            output.push(...diagnostic.notes.map((note) => `note: ${note}`))
-        }
-
-        return output.join("\n")
     }
 }
