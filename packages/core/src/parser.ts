@@ -52,6 +52,7 @@ export class Parser {
             this.parseHeaderSpacing()
         } else {
             this.cursor = 0
+            this.checkMissingHeaderMarker(markers.references ?? markers.lineEnd)
         }
 
         this.parseDescription(
@@ -128,6 +129,23 @@ export class Parser {
             lineEnd: end,
             header,
             references,
+        }
+    }
+
+    // a typed, breaking prefix can also be a description, so only warn
+    private checkMissingHeaderMarker(end: number) {
+        const firstLine = this.source.slice(0, end)
+        const match = /^[\p{L}\p{N}_-]+(?:\.[\p{L}\p{N}_-]+)*\([^()\s]+\)!(?=[ \t]|$)/u.exec(
+            firstLine,
+        )
+        if (match) {
+            this.diagnostics.warning(
+                { key: "header.marker_missing" },
+                this.point(match[0].length),
+                {
+                    code: "header.marker_missing",
+                },
+            )
         }
     }
 

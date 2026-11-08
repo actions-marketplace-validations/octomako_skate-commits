@@ -11,6 +11,7 @@ export const en: Locale = {
         "marker.references": "multiple reference markers",
         "marker.references.label": 'only one "|" is allowed',
         "marker.order": "header marker must come before references",
+        "header.marker_missing": 'possible missing ":" after header',
         "header.syntax": "unexpected content in header",
         "header.syntax.label": "unexpected content",
         "scope.expected": "expected a scope",

@@ -72,3 +72,20 @@ test("reports header, scope, spacing, reference and marker problems", () => {
     ]
     for (const [source, output] of cases) expect(parse(source).output).toBe(output)
 })
+
+test("warns about a likely missing colon without rejecting descriptions", () => {
+    const result = parse("core.api(refactor)! v2")
+    expect(result.output).toBe(
+        'warning[header.marker_missing]:20 - possible missing ":" after header',
+    )
+    expect(result.commit?.description).toBe("core.api(refactor)! v2")
+    expect(result.diagnostics.hasErrors).toBe(false)
+    for (const source of [
+        "update readme",
+        "fix parser (refactor)!",
+        "core.api(refactor): v2",
+        "core.api(refactor) v2",
+    ]) {
+        expect(parse(source).output).toBe("")
+    }
+})
