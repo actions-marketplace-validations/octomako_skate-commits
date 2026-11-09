@@ -1,0 +1,12 @@
+{
+    "name": "skate-cli",
+    "private": true,
+    "type": "module",
+    "bin": {
+        "skate": "./src/index.ts"
+    },
+    "scripts": {
+        "test": "bun test"
+    },
+    "module": "src/index.ts"
+}
