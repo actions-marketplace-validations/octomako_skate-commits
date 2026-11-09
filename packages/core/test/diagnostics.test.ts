@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test"
-import { Parser, formatDiagnostics, formatMessage } from "../src/index"
+import { Parser } from "../src/parser"
+import { formatDiagnostics, formatMessage } from "../src/formatter"
 
 function parse(source: string) {
     const parser = new Parser(source)
@@ -28,7 +29,7 @@ test("formats empty, unknown and unterminated types", () => {
         'error[type.unknown]:6 - unknown commit type "feature". expected one of: fix, migrate, optimize, refactor, revert',
     )
     expect(parse("core(fix: update").output).toBe(
-        "error[type.unterminated]:5 - unterminated commit type",
+        'error[type.unterminated]:5 - unterminated commit type. expected ")"',
     )
 })
 
@@ -60,7 +61,7 @@ test("formats arguments, fallback, notes and unsafe values", () => {
 
 test("reports header, scope, spacing, reference and marker problems", () => {
     const cases: [string, string][] = [
-        ["core!!!: update", "error[header.syntax]:6 - unexpected content in header"],
+        ["core!!!: update", 'error[header.syntax]:6 - only one "!" is allowed in the header'],
         [": update", "error[scope.expected]:1 - expected a scope"],
         ["Core: update", "error[scope.case]:1 - scope must be lowercase"],
         ["core:update", 'error[header.spacing]:6 - expected a space after ":"'],

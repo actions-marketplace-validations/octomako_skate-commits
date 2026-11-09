@@ -151,7 +151,10 @@ export class Parser {
 
     // header = scope [ type ] [ breaking ]
     private parseHeader(commit: Commit, end: number) {
-        this.parseScope(commit, end)
+        if (!this.parseScope(commit, end)) {
+            this.cursor = end
+            return
+        }
 
         if (this.cursor < end && this.peek() === "(") {
             this.parseType(commit, end)
@@ -159,22 +162,41 @@ export class Parser {
 
         if (this.cursor < end && this.consume("!")) {
             commit.breaking = true
+
+            const start = this.cursor
+            while (this.cursor < end && this.consume("!")) {}
+            if (this.cursor > start) {
+                this.diagnostics.error(
+                    { key: "header.breaking_repeated" },
+                    this.span(start, this.cursor),
+                    {
+                        code: "header.syntax",
+                    },
+                )
+            }
         }
 
         if (this.cursor < end) {
-            this.diagnostics.error({ key: "header.syntax" }, this.span(this.cursor, end), {
-                code: "header.syntax",
-                labels: [
-                    { span: this.span(this.cursor, end), message: { key: "header.syntax.label" } },
-                ],
-            })
-
+            const start = this.cursor
+            let key = "header.unexpected"
+            if (this.peek() === "(") {
+                key = commit.breaking ? "header.type_after_breaking" : "header.type_repeated"
+            } else if (this.peek() === ")") {
+                key = "header.parenthesis_unexpected"
+            } else if ([...this.source.slice(start, end)].every(isWhitespace)) {
+                key = "header.space_before_marker"
+            }
+            this.diagnostics.error(
+                { key, args: { value: this.source.slice(start, end) } },
+                this.span(start, end),
+                { code: "header.syntax" },
+            )
             this.cursor = end
         }
     }
 
     // scope = identifier { '.' identifier }
-    private parseScope(commit: Commit, end: number) {
+    private parseScope(commit: Commit, end: number): boolean {
         const first = this.parseScopeSegment(end)
 
         if (first === null) {
@@ -182,7 +204,7 @@ export class Parser {
                 code: "scope.expected",
             })
 
-            return
+            return false
         }
 
         commit.scope.push(first)
@@ -196,11 +218,12 @@ export class Parser {
                     code: "scope.expected",
                 })
 
-                return
+                return false
             }
 
             commit.scope.push(scope)
         }
+        return true
     }
 
     private parseScopeSegment(end: number): string | null {
@@ -240,6 +263,7 @@ export class Parser {
             this.diagnostics.error({ key: "type.unterminated" }, this.span(open, end), {
                 code: "type.unterminated",
                 labels: [{ span: this.point(end), message: { key: "type.unterminated.label" } }],
+                notes: [{ key: "type.unterminated.label" }],
             })
 
             return
@@ -270,7 +294,7 @@ export class Parser {
     }
 
     // ': ' is required
-    // extra whitespace is accepted but isn't cannonical
+    // extra whitespace is accepted but isn't canonical
     private parseHeaderSpacing() {
         const start = this.cursor
 
