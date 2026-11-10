@@ -1,0 +1,28 @@
+name: skate
+description: validate a commit message or pull request title
+branding:
+    icon: check-circle
+    color: blue
+inputs:
+    message:
+        description: message to validate; defaults to the pull request title
+        required: false
+    message-file:
+        description: message file in the caller's workspace; overrides the default title
+        required: false
+    bun-version:
+        description: Bun version used to run skate
+        default: "1.4.4"
+runs:
+    using: composite
+    steps:
+        - uses: oven-sh/setup-bun@v2
+          with:
+              bun-version: ${{ inputs.bun-version }}
+        - name: validate message
+          shell: bash
+          env:
+              SKATE_MESSAGE: ${{ inputs.message }}
+              SKATE_MESSAGE_FILE: ${{ inputs.message-file }}
+              SKATE_ACTION_PATH: ${{ github.action_path }}
+          run: bun "$SKATE_ACTION_PATH/packages/github-action/src/index.ts"
