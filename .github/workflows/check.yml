@@ -25,7 +25,7 @@ jobs:
             - name: test standalone cli
               run: bun test packages/cli/test
               env:
-                  SKATE_TEST_BINARY: ${{ github.workspace }}/packages/cli/dist/${{ runner.os == 'Windows' && 'skate.exe' || 'skate' }}
+                  SKATE_TEST_BINARY: ${{ github.workspace }}/dist/${{ runner.os == 'Windows' && 'skate.exe' || 'skate' }}
     action:
         runs-on: ubuntu-22.04
         steps:

@@ -1,0 +1,73 @@
+name: release cli
+on:
+    release:
+        types: [published]
+permissions:
+    contents: read
+concurrency:
+    group: release-${{ github.event.release.tag_name }}
+    cancel-in-progress: false
+jobs:
+    build:
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - os: ubuntu-22.04
+                      target: linux-x64
+                    - os: ubuntu-22.04-arm
+                      target: linux-arm64
+                    - os: macos-15-intel
+                      target: macos-x64
+                    - os: macos-15
+                      target: macos-arm64
+                    - os: windows-2022
+                      target: windows-x64
+        runs-on: ${{ matrix.os }}
+        env:
+            SKATE_VERSION: ${{ github.event.release.tag_name }}
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.event.release.tag_name }}
+            - uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version-file: .bun-version
+            - run: bun install --frozen-lockfile
+            - run: bun run typecheck
+            - run: bun test packages
+            - run: bun run --cwd packages/cli build
+            - name: test standalone cli
+              run: bun test packages/cli/test
+              env:
+                  SKATE_TEST_BINARY: ${{ github.workspace }}/dist/${{ runner.os == 'Windows' && 'skate.exe' || 'skate' }}
+                  SKATE_EXPECT_VERSION: ${{ github.event.release.tag_name }}
+            - run: bun scripts/package-cli.ts
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: cli-${{ matrix.target }}
+                  path: dist/releases/skate-${{ matrix.target }}.tar.gz
+                  if-no-files-found: error
+    publish:
+        needs: build
+        runs-on: ubuntu-22.04
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.event.release.tag_name }}
+            - uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version-file: .bun-version
+            - uses: actions/download-artifact@v4
+              with:
+                  pattern: cli-*
+                  path: dist/releases
+                  merge-multiple: true
+            - run: bun scripts/checksums.ts
+            - name: upload release assets
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  RELEASE_TAG: ${{ github.event.release.tag_name }}
+              run: gh release upload "$RELEASE_TAG" dist/releases/*.tar.gz dist/releases/SHA256SUMS --repo "$GITHUB_REPOSITORY" --clobber

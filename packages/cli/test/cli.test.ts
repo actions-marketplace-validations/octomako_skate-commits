@@ -111,6 +111,6 @@ test("shows a version without validating a message", async () => {
         const result = await run([flag])
         expect(result.code).toBe(0)
         expect(result.stderr).toBe("")
-        expect(result.stdout).toStartWith("skate ")
+        expect(result.stdout).toBe(`skate ${process.env.SKATE_EXPECT_VERSION ?? "dev"}\n`)
     }
 })
