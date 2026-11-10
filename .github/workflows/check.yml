@@ -17,7 +17,14 @@ jobs:
             - uses: oven-sh/setup-bun@v2
               with:
                   bun-version-file: .bun-version
-            - run: bun install --frozen-lockfile
+            - name: install dependencies
+              shell: bash
+              run: |
+                  for delay in 0 5 15; do
+                    sleep "$delay"
+                    if bun install --frozen-lockfile; then exit 0; fi
+                  done
+                  exit 1
             - run: bun run typecheck
             - run: bun run format:check
             - run: bun test packages
