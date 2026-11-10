@@ -1,4 +1,4 @@
-name: skate
+name: skate-commits
 description: validate a commit message or pull request title
 branding:
     icon: check-circle
