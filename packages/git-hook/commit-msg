@@ -1,0 +1,14 @@
+#!/bin/sh
+
+if [ "$#" -ne 1 ]; then
+    printf '%s\n' 'skate: expected a commit message file' >&2
+    exit 2
+fi
+
+skate_bin=${SKATE_BIN:-skate}
+if ! command -v "$skate_bin" >/dev/null 2>&1; then
+    printf '%s\n' 'skate: cli not found; install skate or set SKATE_BIN to its path' >&2
+    exit 2
+fi
+
+exec "$skate_bin" --file "$1"
