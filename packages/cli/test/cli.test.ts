@@ -1,4 +1,4 @@
-import { fileURLToPath } from "node:url"
+import { fileURLToPath, pathToFileURL } from "node:url"
 import { expect, test } from "bun:test"
 import { mkdtemp, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
@@ -113,4 +113,19 @@ test("shows a version without validating a message", async () => {
         expect(result.stderr).toBe("")
         expect(result.stdout).toBe(`skate ${process.env.SKATE_EXPECT_VERSION ?? "dev"}\n`)
     }
+})
+
+test("starts even when the loader reports import.meta.main as false", async () => {
+    const script = `process.argv = [process.execPath, ${JSON.stringify(entry)}, "--version"]; await import(${JSON.stringify(pathToFileURL(entry).href)})`
+    const proc = Bun.spawn([process.execPath, "--eval", script], {
+        stdin: "ignore",
+        stdout: "pipe",
+        stderr: "pipe",
+    })
+    const [code, stdout, stderr] = await Promise.all([
+        proc.exited,
+        new Response(proc.stdout).text(),
+        new Response(proc.stderr).text(),
+    ])
+    expect({ code, stdout, stderr }).toEqual({ code: 0, stdout: "skate dev\n", stderr: "" })
 })

@@ -36,7 +36,7 @@ function parseInput(args: string[]): Input | null {
     return null
 }
 
-export async function run(args: string[]): Promise<number> {
+async function main(args: string[]): Promise<number> {
     if (args.length === 1 && (args[0] === "--version" || args[0] === "-v")) {
         process.stdout.write(`skate ${version}\n`)
         return 0
@@ -79,6 +79,4 @@ export async function run(args: string[]): Promise<number> {
     return parser.diagnostics.hasErrors ? 1 : 0
 }
 
-if (import.meta.main) {
-    process.exitCode = await run(process.argv.slice(2))
-}
+process.exitCode = await main(process.argv.slice(2))
