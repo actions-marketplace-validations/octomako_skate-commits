@@ -1,0 +1,35 @@
+name: check
+on:
+    push:
+    pull_request:
+    workflow_dispatch:
+permissions:
+    contents: read
+jobs:
+    check:
+        strategy:
+            fail-fast: false
+            matrix:
+                os: [ubuntu-22.04, macos-15, windows-2022]
+        runs-on: ${{ matrix.os }}
+        steps:
+            - uses: actions/checkout@v4
+            - uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version-file: .bun-version
+            - run: bun install --frozen-lockfile
+            - run: bun run typecheck
+            - run: bun run format:check
+            - run: bun test packages
+            - run: bun run --cwd packages/cli build
+            - name: test standalone cli
+              run: bun test packages/cli/test
+              env:
+                  SKATE_TEST_BINARY: ${{ github.workspace }}/packages/cli/dist/${{ runner.os == 'Windows' && 'skate.exe' || 'skate' }}
+    action:
+        runs-on: ubuntu-22.04
+        steps:
+            - uses: actions/checkout@v4
+            - uses: ./
+              with:
+                  message: "core: check action"
