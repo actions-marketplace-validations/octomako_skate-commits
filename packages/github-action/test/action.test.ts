@@ -1,6 +1,7 @@
+import { fileURLToPath } from "node:url"
 import { expect, test } from "bun:test"
 
-const entry = new URL("../src/index.ts", import.meta.url).pathname
+const entry = fileURLToPath(new URL("../src/index.ts", import.meta.url))
 
 async function run(message: string) {
     const proc = Bun.spawn([process.execPath, entry], {

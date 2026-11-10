@@ -1,9 +1,10 @@
+import { fileURLToPath } from "node:url"
 import { expect, test } from "bun:test"
 import { mkdtemp, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-const entry = new URL("../src/index.ts", import.meta.url).pathname
+const entry = fileURLToPath(new URL("../src/index.ts", import.meta.url))
 
 async function run(args: string[], input = "") {
     const command = process.env.SKATE_TEST_BINARY

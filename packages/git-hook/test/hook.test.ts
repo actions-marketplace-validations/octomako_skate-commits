@@ -1,10 +1,11 @@
+import { fileURLToPath } from "node:url"
 import { afterEach, beforeEach, describe, expect, test } from "bun:test"
 import { mkdtemp, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-const hook = new URL("../commit-msg", import.meta.url).pathname
-const cli = new URL("../../cli/src/index.ts", import.meta.url).pathname
+const hook = fileURLToPath(new URL("../commit-msg", import.meta.url))
+const cli = fileURLToPath(new URL("../../cli/src/index.ts", import.meta.url))
 
 describe.skipIf(process.platform === "win32")("commit-msg hook", () => {
     let directory: string
