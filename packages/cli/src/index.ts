@@ -1,6 +1,10 @@
 #!/usr/bin/env bun
 import { Parser, formatDiagnostics } from "../../core/src/index"
 
+declare const SKATE_VERSION: string
+
+const version = typeof SKATE_VERSION === "string" ? SKATE_VERSION : "dev"
+
 const usage = `usage: skate <message>
        skate --message <message>
        skate --file <path>
@@ -13,6 +17,7 @@ with no arguments, read stdin when piped
 --file <path>        read a UTF-8 message file
 --stdin              read a message from stdin
 -h, --help           show this help
+-v, --version        show the version
 `
 
 type Input = { kind: "message" | "file"; value: string } | { kind: "stdin" }
@@ -32,6 +37,11 @@ function parseInput(args: string[]): Input | null {
 }
 
 export async function run(args: string[]): Promise<number> {
+    if (args.length === 1 && (args[0] === "--version" || args[0] === "-v")) {
+        process.stdout.write(`skate ${version}\n`)
+        return 0
+    }
+
     if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
         process.stdout.write(usage)
         return 0

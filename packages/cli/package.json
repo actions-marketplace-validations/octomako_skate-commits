@@ -6,7 +6,8 @@
         "skate": "./src/index.ts"
     },
     "scripts": {
-        "test": "bun test"
+        "test": "bun test",
+        "build": "bun build.ts"
     },
     "module": "src/index.ts"
 }

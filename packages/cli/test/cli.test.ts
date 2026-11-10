@@ -6,17 +6,20 @@ import { join } from "node:path"
 const entry = new URL("../src/index.ts", import.meta.url).pathname
 
 async function run(args: string[], input = "") {
-    const process = Bun.spawn([Bun.which("bun")!, entry, ...args], {
+    const command = process.env.SKATE_TEST_BINARY
+        ? [process.env.SKATE_TEST_BINARY]
+        : [process.execPath, entry]
+    const proc = Bun.spawn([...command, ...args], {
         stdin: "pipe",
         stdout: "pipe",
         stderr: "pipe",
     })
-    process.stdin.write(input)
-    process.stdin.end()
+    proc.stdin.write(input)
+    proc.stdin.end()
     const [code, stdout, stderr] = await Promise.all([
-        process.exited,
-        new Response(process.stdout).text(),
-        new Response(process.stderr).text(),
+        proc.exited,
+        new Response(proc.stdout).text(),
+        new Response(proc.stderr).text(),
     ])
     return { code, stdout, stderr }
 }
@@ -99,5 +102,14 @@ test("literal arguments and usage errors are handled", async () => {
         expect(result.code).toBe(0)
         expect(result.stdout).toStartWith("usage: skate")
         expect(result.stderr).toBe("")
+    }
+})
+
+test("shows a version without validating a message", async () => {
+    for (const flag of ["--version", "-v"]) {
+        const result = await run([flag])
+        expect(result.code).toBe(0)
+        expect(result.stderr).toBe("")
+        expect(result.stdout).toStartWith("skate ")
     }
 })

@@ -18,3 +18,14 @@ errors exit with status 1; usage and read failures exit with status 2
 warnings do not cause failure
 
 see the [spec](../../spec/cli/validation.md) for the interface
+
+## standalone build
+
+```sh
+bun run --cwd packages/cli build
+packages/cli/dist/skate --help
+```
+
+on Windows the output is `packages/cli/dist/skate.exe`
+use `--version` to see the embedded version
+set `SKATE_VERSION` while building to embed a release tag
